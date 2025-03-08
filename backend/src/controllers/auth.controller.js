@@ -55,14 +55,73 @@ if(!email|| !fullName|| !password){
 export const login = async(req, res) => {
 
 
+try {
 
+
+  
 const{email,password}=req.body;
+if(!email||  !password){
+  return res
+  .status(400)
+  .json({ message: "User Must Fill all the feilds" });
+}
+const user=await User.findOne({email})
+if(!user){
+  return res
+  .status(400)
+  .json({ message: "invalid credential" });
+}
 
+
+
+const isPasswordCorrect=bcrypt.compare(password,user.password)
+if(!isPasswordCorrect){
+  return res
+  .status(400)
+  .json({ message: "invalid credential" });
+}
+
+generateToken(user._id,res)
+res.status(200).json({
+
+  _id:user._id,
+  fullName:user.fullName,
+  email:user.email,
+  profilePic:user.profilePic
+
+})
+  
+} catch (error) {
+  console.log(error,"error in login container");
+  res.status(500).json({message:"internal server error"})
+  
+}
 
 
 
 };
 
 export const logout = (req, res) => {
-  res.send("logout route");
+try {
+  res.cookie("jwt","",{maxAge:0});
+  res.status(200).json({message:"logout successfully"})
+
+} catch (error) {
+  console.log(error,"error in logout container");
+  res.status(500).json({message:"internal server error"})
+  
+}
 };
+
+
+export const updateProfile=(req,res)=>{
+   try {
+    const {profilePic}=req.body;
+    const userId=req.user._id;
+    if(!profilePic){
+    return res.status(400).json({message:"Prfolile pic is required"})
+    }
+   } catch (error) {
+    
+   }
+}
