@@ -17,7 +17,7 @@ app.use(
   })
 );
 app.use("/api/auth", authRoutes);
-app.use("/api/message", messageRoutes);
+app.use("/api/messages", messageRoutes);
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
