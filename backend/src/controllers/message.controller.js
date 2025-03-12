@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
+import { getReceiverSocketId ,io} from "../lib/socket.js";
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -21,8 +22,8 @@ export const getMessages = async (req, res) => {
     const myId = req.user._id;
     const messages = await Message.find({
       $or: [
-        { senderId: myId, recieverId: userToChatId },
-        { senderId: userToChatId, recieverId: myId },
+        { senderId: myId, receiverId: userToChatId },
+        { senderId: userToChatId, receiverId: myId },
       ],
     });
 
@@ -43,7 +44,7 @@ res.status(500).json({error:"internal server error"});
 export const sendMessage=async(req,res)=>{
 try {
 const {text,image}=req.body;
-const {id:reciverId}=req.params;
+const { id: receiverId } = req.params;
 const senderId=req.user._id;
 
 let imageUrl;
@@ -55,17 +56,28 @@ if(image){
 
 const newMessage=new Message({
     senderId,
-    recieverId,
+    receiverId,
     text,
     image:imageUrl,
 });
 await newMessage.save();
 
-//todo: realtime functionality goes here => socket.io
+
+
+
+const recieverSocketId=getReceiverSocketId(receiverId);
+if(recieverSocketId){
+  io.to(recieverSocketId).emit("newMessage",newMessage)
+}
+
+   
+
+
+
 res.status(201).json(newMessage)
     
 } catch (error) {
     console.log("Error in sendMessage controller: ",error.message);
-    res.status(500).jsson({error:"Internal server Error"})
+    res.status(500).json({error:"Internal server Error"})
 }
 };
